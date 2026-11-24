@@ -103,6 +103,51 @@ def adopt_cities(evs):
 MOBILE_CSS = '<style>.citypick{border-top:1px dashed #e6e8ec}.citypick>summary{list-style:none;cursor:pointer;padding:9px 2px;font-size:14px;font-weight:700;color:#12233d;display:flex;align-items:center;gap:8px}.citypick>summary::-webkit-details-marker{display:none}.citypick>summary i{font-style:normal;font-weight:500;font-size:12px;color:#8a909a}.citypick>summary::after{content:"\\25BE";margin-left:auto;color:#8a909a}.citypick[open]>summary::after{content:"\\25B4"}@media(max-width:768px){header{position:static}.bar{position:sticky;top:0;z-index:50}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.stats>div{padding:10px 4px}.stats b{font-size:17px}.stats span{font-size:11px}}</style>'
 ARCHIVE_CSS = '<style>.pastgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}.pastlink{display:block;padding:12px 14px;border:1px solid #e6e8ec;border-radius:9px;background:#fff;transition:.15s}.pastlink:hover{border-color:#12233d;background:#f7f8fa}.pastlink b{display:block;font-size:14px;color:#12233d;line-height:1.35}.pastlink span{display:block;margin-top:5px;font-size:12px;color:#7a818c}.pastwrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}.pastcity h3{font-size:15px;color:#12233d;margin:0 0 8px;border-bottom:1px solid #e6e8ec;padding-bottom:6px}.pastcity h3 small{font-weight:400;color:#8a909a;margin-left:6px}.pastlist{list-style:none;margin:0;padding:0}.pastlist li{padding:7px 0;border-bottom:1px dashed #eef0f3}.pastlist li a{font-size:14px;color:#12233d}.pastlist li .d{display:inline-block;margin-left:6px;font-size:12px;color:#7a818c}.pastlist li .p{display:block;font-size:12px;color:#9aa0a9;margin-top:2px}</style>'
 
+# ── 가이드 페이지 사진 (2026-11-24) ─────────────────────────────
+#  · 자체 보유 이미지를 1000x440 WebP 로 변환해 /assets/photo/ 에 둔다
+#  · width·height·aspect-ratio 를 지정해 로딩 중 글이 밀리지 않게 한다
+#  · 첫 장만 즉시 로드, 본문 중간 사진은 지연 로드
+ART_CSS = ('<style>'
+  '.artfig{margin:0 0 20px;border-radius:18px;overflow:hidden;background:#fff;'
+  'box-shadow:0 6px 20px rgba(255,107,90,.10)}'
+  '.artfig img{display:block;width:100%;height:auto;aspect-ratio:1000/440;'
+  'object-fit:cover}'
+  '.artfig figcaption{padding:10px 14px;font-size:12.5px;color:#8a7f84;'
+  'border-top:1px solid #ffe4dd}'
+  '.artfig.mid{margin:22px 0}'
+  '@media(max-width:768px){.artfig{border-radius:14px}'
+  '.artfig figcaption{font-size:12px;padding:9px 12px}}'
+  '</style>')
+
+def _figure(src, alt, caption, cls="", eager=False):
+    """가이드 본문 사진. 첫 장만 즉시 로드하고 나머지는 지연 로드한다."""
+    return ('<figure class="artfig %s">'
+            '<img src="/assets/photo/%s" alt="%s" width="1000" height="440" '
+            'loading="%s" decoding="async">'
+            '<figcaption>%s</figcaption></figure>'
+            % (cls, src, esc(alt), "eager" if eager else "lazy", caption))
+
+# 가이드 페이지 사진 (2026-11-24)
+#   원본: 01_사이트_배포/standalone/assets/images/ 에 보관 중인 자체 보유 이미지
+#   가로 1000px · 1000x440 크롭 · WebP 82 — 장당 40~90KB
+ART_ILLUST = {
+  "웨딩박람회-활용법": (
+      ("g1-fair-couple.webp", "웨딩박람회에서 손을 맞잡은 예비부부와 부케",
+       "박람회는 둘이 함께 가는 편이 좋습니다. 현장에서 바로 결정해야 하는 항목이 많습니다."),
+      ("g1-outdoor.webp", "야외에서 마주 본 신랑 신부",
+       "상담에서 들은 조건은 그 자리에서 적어 두세요. 하루에 여러 곳을 돌면 뒤섞입니다.")),
+  "스드메-견적-비교": (
+      ("g2-dress.webp", "웨딩드레스를 입고 선 신부",
+       "드레스는 벌수와 등급에 따라 같은 패키지라도 금액 차이가 큽니다."),
+      ("g2-bouquet.webp", "신부가 든 흰 장미 부케",
+       "부케는 드레스 업체 패키지에 포함되는 경우와 별도인 경우가 있습니다. 견적서에서 확인하세요.")),
+  "결혼준비-체크리스트": (
+      ("g3-rings.webp", "예물 반지를 낀 신부의 손과 부케",
+       "정해진 것과 남은 것을 나눠 적어 두면 다음에 할 일이 분명해집니다."),
+      None),
+}
+
+
 def w(path, content):
     p = os.path.join(OUT, path.lstrip("/"))
     os.makedirs(os.path.dirname(p), exist_ok=True)
@@ -1288,7 +1333,21 @@ def article_page(slug, title_ko, kw):
         "inLanguage":"ko-KR","datePublished":"%s-01-15"%YEAR,"dateModified":TODAY,
         "author":{"@type":"Organization","name":"에이치에스컴퍼니"},
         "publisher":{"@type":"Organization","name":SITE}}, ensure_ascii=False)]
-    inner = "".join(f"<h2 class='sec'>{h}</h2><p class='para'>{p}</p>" for h,p in secs)
+    # 사진 — 첫 장 위에 하나, 본문 중간에 하나 (중간 사진은 없을 수 있다)
+    _hero_fig, _mid_fig = "", ""
+    if slug in ART_ILLUST:
+        _top, _mid = ART_ILLUST[slug]
+        if _top:
+            _hero_fig = _figure(_top[0], _top[1], _top[2], eager=True)
+        if _mid:
+            _mid_fig = _figure(_mid[0], _mid[1], _mid[2], "mid")
+    _mid_at = max(1, len(secs) // 2)
+    _parts = []
+    for _i, (h, p) in enumerate(secs):
+        if _i == _mid_at and _mid_fig:
+            _parts.append(_mid_fig)
+        _parts.append(f"<h2 class='sec'>{h}</h2><p class='para'>{p}</p>")
+    inner = _hero_fig + "".join(_parts)
     def _fmt(s):
         return s.replace("{loc}", "우리 지역").replace("{v}", "행사장")
     afaq = [(ED.fix_josa(_fmt(q)), ED.fix_josa(_fmt(a))) for q, a in ED.sample(ED.LOC_FAQ, slug, 6, "art")]
@@ -1310,7 +1369,7 @@ def article_page(slug, title_ko, kw):
  <section class="wrap"><h2 class="sec">다른 가이드</h2><div class="chips near">{others}</div></section>
 </main>
 {footer()}"""
-    w(path+"index.html", head(title, desc, kw, url, lds) + body)
+    w(path+"index.html", head(title, desc, kw, url, lds) + ART_CSS + body)
     URLS.append(url)
 
 def guide_index():
