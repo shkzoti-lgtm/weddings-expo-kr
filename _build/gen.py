@@ -1481,6 +1481,25 @@ if __name__ == "__main__":
             os.makedirs(dst, exist_ok=True)
             for f in files: shutil.copy2(os.path.join(root, f), os.path.join(dst, f))
         print("  정적 파일 복사 완료")
+
+        # ── 2026-11-25 추가 ──────────────────────────────────────
+        # events.js 는 페이지가 열린 뒤 시트를 다시 읽어 카드를 새로 그린다.
+        # 그 안의 시트 ID 가 data.py 와 다르면, 서버 HTML 은 멀쩡한데
+        # 화면에서만 다른 사이트의 행사로 바뀌어 버린다.
+        # (실제로 웨딩노트 시트 ID 가 남아 있어 replyalba 로 덮어씌워졌다)
+        # 그래서 복사한 뒤 ID 를 data.py 값으로 강제로 맞춘다.
+        _ev = os.path.join(OUT, "assets", "events.js")
+        if os.path.isfile(_ev):
+            _src = open(_ev, encoding="utf-8").read()
+            _fixed = re.sub(r"var\s+SHEET_ID\s*=\s*'[^']*'",
+                            "var SHEET_ID='%s'" % SHEET_ID, _src, count=1)
+            if _fixed != _src:
+                open(_ev, "w", encoding="utf-8").write(_fixed)
+                print("  events.js 시트 ID 교정 → %s" % SHEET_ID)
+            elif SHEET_ID not in _src:
+                raise SystemExit("events.js 에서 SHEET_ID 를 찾지 못했습니다. 직접 확인하세요.")
+            else:
+                print("  events.js 시트 ID 정상")
     print("행사 데이터 로드…")
     EVS = EV.load(refresh=True)
     print("  replyalba(시트): %d건" % len(EVS))
