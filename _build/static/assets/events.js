@@ -3,7 +3,10 @@
 (function(){
   var box=document.getElementById('event-cards');
   if(!box) return;
-  var SHEET_ID='1f6BgoRzaC7sgye5_X0uEvElrGgab49uJ4NHcR5EfH44';
+  // 2026-11-25 수정 — 웨딩노트(replyalba) 시트 ID가 그대로 남아 있어서
+  // 페이지가 열린 뒤 cpaad 카드가 replyalba 데이터로 덮어씌워졌다.
+  // 이 ID는 data.py 의 SHEET_ID 와 반드시 같아야 한다.
+  var SHEET_ID='13u9SVJGppXKHIZlE1syVZ8H7-qKzdrpSIQVvSboTcD4';  // 전국웨딩엑스포 (cpaad)
   var URL='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv&t='+Date.now();
   var cities=(box.getAttribute('data-cities')||'').split(',').map(function(s){return s.trim();}).filter(Boolean);
   var multi=cities.length>1, cset={}; cities.forEach(function(c){cset[c]=1;});
